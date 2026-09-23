@@ -1,22 +1,22 @@
 #lang plai
 (require (file "./grammars.rkt"))
 
-; ============================================================
-; Lenguajes de Programación 2027-1
-; Práctica 3 - Lenguaje WAE+
-; parser.rkt
-;
-; INTEGRANTES: 
-; - Cortes Nava Jose Luis (322115437)
-; - Martínez García Emilio (322086689)
-;
-; ============================================================
+;; ============================================================
+;; Lenguajes de Programación 2027-1
+;; Práctica 3 - Lenguaje WAE+
+;; parser.rkt
+;;
+;; INTEGRANTES: 
+;; - Cortes Nava Jose Luis (322115437)
+;; - Martínez García Emilio (322086689)
+;;
+;; ============================================================
 
-; parse : s-expression -> FWAE
-; Recibe una s-expression y construye el ASA correspondiente.
-; Si la expresión no pertenece al lenguaje WAE+, debe lanzar:
-;   "Syntax Error: expresion mal formada en parse"
-;
+;; parse : s-expression -> FWAE
+;; Recibe una s-expression y construye el ASA correspondiente.
+;; Si la expresión no pertenece al lenguaje WAE+, debe lanzar:
+;;   "Syntax Error: expresion mal formada en parse"
+;;
 (define (parse sexp)
   (cond
     [(number? sexp)  (num sexp)]
