@@ -34,14 +34,86 @@
                     cuerpo
                     (subst cuerpo sub-id value)))]
     [with* (bindings cuerpo)
-           ; Te toca esta parte Emilio jeje :D.
-           (error 'subst "TODO: implementar with* (parte Emlio)")]))
+           (if (member sub-id (map binding-id bindings))
+               (with* (subst-bindings bindings sub-id value) cuerpo)
+               (with* (map
+                       (lambda (b) (binding (binding-id b) (subst (binding-value b) sub-id value)))
+                       bindings)
+                      (subst cuerpo sub-id value)))]))
+
+;; subst-bindings : (ListOf Binding) Symbol FWAE -> (ListOf Binding)
+;; Realiza la sustitución correspondiente a todas las bindings de la
+;; lista recibida hasta encontrar una aparición que la sombree.
+(define (subst-bindings bindings sub-id value)
+  (cond
+    [(empty? bindings) bindings]
+    [(symbol=? sub-id (binding-id (first bindings)))
+     (cons
+      (binding (binding-id (first bindings)) (subst (binding-value (first bindings)) sub-id value))
+      (rest bindings))]
+    [else (cons
+           (binding (binding-id (first bindings)) (subst (binding-value (first bindings)) sub-id value))
+           (subst-bindings (rest bindings) sub-id value))]))
 
 ;; interp : FWAE -> (or/c number? boolean?)
 ;; Evalúa una expresión WAE+ con alcance estático y evaluación
 ;; glotona. Para with y with* debe utilizar subst.
 (define (interp expr)
-  (error 'interp "TODO: implementar interp (parte Emilio)"))
+  (type-case FWAE expr
+    [num (n) n]
+    [bool (b) b]
+    [id (i) (error "Una variable libre no se puede evaluar.")]
+    [op (f args) (apply f (map interp args))]
+    [with (bindings cuerpo) (subst-cuerpo bindings cuerpo)]
+    [with* (bindings cuerpo) (subst-cuerpo (subst-b bindings) cuerpo)]))
+
+;; subst-cuerpo : (ListOf Binding) FWAE -> (or/c number? boolean?)
+;; Sustituye los bindings en la expresión FWAE y la interpreta
+(define (subst-cuerpo bindings cuerpo)
+  (if (empty? bindings)
+      (interp cuerpo)
+      (subst-cuerpo
+       (rest bindings)
+       (subst cuerpo (binding-id (first bindings)) (fwaeifica (interp (binding-value (first bindings))))))))
+
+;; fwaeifica : (or/c number? boolean?) -> FWAE
+;; Convierte un valor interpretado un una expresión
+;; FWAE para poder seguirla utilizando.
+(define (fwaeifica v) (if (boolean? v) (bool v) (num v)))
+
+;; subst-b : (ListOf Binding) -> (ListOf Binding)
+;; Regresa la lista con los bindings que tienen el mismo id aplicados.
+(define (subst-b bindings)
+  (cond
+    [(empty? bindings) bindings]
+    [(member (binding-id (first bindings)) (map binding-id (rest bindings)))
+     (subst-b (aux-subst-b (valua (first bindings)) (rest bindings)))]
+    [else
+     (let ([vb (valua (first bindings))])
+     (cons
+      vb
+      (subst-b (aux-subst-b vb (rest bindings)))))]))
+
+;; valua : Binding -> Binding
+;; Valua la expresión dentro de un binding para asegurar que sea glotona.
+(define (valua b) (binding (binding-id b) (fwaeifica (interp (binding-value b)))))
+
+;; aux-subst-b : Binding (ListOf Binding) -> (ListOf Binding)
+;; Hace las substituciones necesarias dentro de la lista de bindings.
+(define (aux-subst-b b bindings)
+  (cond
+    [(empty? bindings) bindings]
+    [(symbol=? (binding-id b) (binding-id (first bindings)))
+     (cons
+      (binding
+       (binding-id b)
+       (subst (binding-value (first bindings)) (binding-id b) (binding-value b)))
+      (rest bindings))]
+    [else (cons
+           (binding
+            (binding-id (first bindings))
+            (subst (binding-value (first bindings)) (binding-id b) (binding-value b)))
+           (aux-subst-b b (rest bindings)))]))
 
 ; Pruebas propias de la parte implementada.
 (module+ test
