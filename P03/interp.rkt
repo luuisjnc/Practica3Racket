@@ -62,7 +62,7 @@
   (type-case FWAE expr
     [num (n) n]
     [bool (b) b]
-    [id (i) (error "Una variable libre no se puede evaluar.")]
+    [id (i) (error (format "Variable libre: ~a" i))]
     [op (f args) (apply f (map interp args))]
     [with (bindings cuerpo) (subst-cuerpo bindings cuerpo)]
     [with* (bindings cuerpo) (subst-cuerpo (subst-b bindings) cuerpo)]))
